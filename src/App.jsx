@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Spline from '@splinetool/react-spline'
-import { BarChart3, Rocket, Target, LineChart, DollarSign, Mail, Megaphone, Hash, Layers, Tv, Star, Quote } from 'lucide-react'
+import { BarChart3, Rocket, Target, LineChart, DollarSign, Mail, Hash, Layers, Tv, Star, Quote, ShieldCheck } from 'lucide-react'
 
 const palette = {
   cream: '#F8F1E7',
@@ -47,10 +47,39 @@ function ServiceCard({ title, desc, icon: Icon, color }) {
   )
 }
 
+function RetroEyes({ px = 0, py = 0 }) {
+  const eyeMoveX = px * 6
+  const eyeMoveY = py * 6
+  return (
+    <div className="absolute -bottom-6 -left-6 sm:-left-10 w-44 rounded-2xl border-2 shadow-[6px_8px_0_rgba(0,0,0,0.25)]" style={{ background: palette.cream, borderColor: palette.brown }}>
+      <div className="px-4 pt-3 pb-4">
+        <div className="text-xs font-bold mb-2" style={{ color: palette.brown }}>RWS Retro Terminal</div>
+        <div className="mx-auto w-28 h-14 rounded-xl flex items-center justify-between px-3 py-2 border" style={{ borderColor: palette.brown, background: '#fff' }}>
+          {[0,1].map(i => (
+            <div key={i} className="w-10 h-10 rounded-full flex items-center justify-center border" style={{ borderColor: palette.brown, background: palette.cream }}>
+              <div className="w-3.5 h-3.5 rounded-full" style={{ background: palette.orange, transform: `translate(${eyeMoveX}px, ${eyeMoveY}px)` }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [form, setForm] = useState({ name: '', email: '', company: '', revenue_goal: '' })
   const [status, setStatus] = useState({ state: 'idle', message: '' })
+  const [cursor, setCursor] = useState({ px: 0, py: 0 })
   const backendBase = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
+
+  const onMouseMoveHero = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = (e.clientX - rect.left) / rect.width
+    const y = (e.clientY - rect.top) / rect.height
+    const px = (x - 0.5) * 2
+    const py = (y - 0.5) * 2
+    setCursor({ px, py })
+  }
 
   const submitLead = async (e) => {
     e.preventDefault()
@@ -72,34 +101,53 @@ export default function App() {
   return (
     <div className="min-h-screen w-full overflow-x-hidden" style={{ background: palette.cream }}>
       {/* Hero */}
-      <header id="hero" className="relative h-[90vh] w-full overflow-hidden">
-        <div className="absolute inset-0">
-          <Spline scene="https://prod.spline.design/S4k-6fqjuV5AuVZe/scene.splinecode" style={{ width: '100%', height: '100%' }} />
-        </div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(209,106,26,0.35),transparent_45%),radial-gradient(circle_at_80%_30%,rgba(226,176,54,0.35),transparent_35%),radial-gradient(circle_at_50%_80%,rgba(123,161,111,0.35),transparent_40%)] pointer-events-none"></div>
-        <div className="relative container mx-auto px-6 h-full flex items-center">
-          <div className="max-w-2xl">
+      <header id="hero" className="relative w-full overflow-hidden" onMouseMove={onMouseMoveHero}>
+        <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-6 items-center min-h-[86vh] pt-6">
+          <div className="relative">
             <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 mb-5" style={{ background: palette.cream, border: `2px solid ${palette.orange}` }}>
               <Star className="w-4 h-4" style={{ color: palette.orange }} />
               <span className="text-xs font-bold tracking-wider" style={{ color: palette.brown }}>Woman-Owned • Results-Driven</span>
             </div>
-            <h1 className="text-5xl sm:text-6xl font-extrabold leading-tight" style={{ color: palette.cream, textShadow: '0 4px 0 rgba(0,0,0,0.25)' }}>
+            <h1 className="text-5xl sm:text-6xl font-extrabold leading-tight" style={{ color: palette.dark }}>
               Marketing That Actually Makes Money
             </h1>
-            <p className="mt-4 text-lg sm:text-xl" style={{ color: '#EADCCB' }}>
+            <p className="mt-4 text-lg sm:text-xl" style={{ color: palette.brown }}>
               We mix data, creativity, and a proven playbook to grow revenue—not vanity metrics.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <a href="#contact" className="rounded-full px-6 py-3 font-extrabold shadow-[4px_6px_0_0_rgba(0,0,0,0.25)]" style={{ background: palette.orange, color: 'white' }}>
                 Book Strategy Call
               </a>
-              <a href="#wins" className="rounded-full px-6 py-3 font-extrabold border-2" style={{ borderColor: palette.mustard, color: palette.mustard, background: 'rgba(25,23,21,0.6)' }}>
+              <a href="#wins" className="rounded-full px-6 py-3 font-extrabold border-2" style={{ borderColor: palette.mustard, color: palette.mustard, background: palette.dark }}>
                 See Our Wins
               </a>
             </div>
+            <RetroEyes px={cursor.px} py={cursor.py} />
+          </div>
+          <div className="relative h-[52vh] sm:h-[60vh] lg:h-[70vh] rounded-3xl border-4 overflow-hidden shadow-[10px_12px_0_rgba(0,0,0,0.25)]" style={{ borderColor: palette.brown }}>
+            <div className="absolute inset-0" style={{ transform: `translate3d(${cursor.px*12}px, ${cursor.py*12}px, 0) rotateX(${ -cursor.py*6 }deg) rotateY(${ cursor.px*6 }deg)`, transformStyle: 'preserve-3d', transition: 'transform 80ms linear' }}>
+              <Spline scene="https://prod.spline.design/S4k-6fqjuV5AuVZe/scene.splinecode" style={{ width: '100%', height: '100%' }} />
+            </div>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(209,106,26,0.20),transparent_45%),radial-gradient(circle_at_80%_30%,rgba(226,176,54,0.20),transparent_35%),radial-gradient(circle_at_50%_80%,rgba(123,161,111,0.20),transparent_40%)] pointer-events-none"></div>
           </div>
         </div>
       </header>
+
+      {/* Credibility strip */}
+      <section className="py-10">
+        <div className="container mx-auto px-6">
+          <div className="flex items-center justify-center gap-6 flex-wrap">
+            {["ACME","ORBIT","SUNCO","PIONEER","ATLAS"].map((name,i)=> (
+              <div key={i} className="px-5 py-3 rounded-xl border-2 text-sm font-extrabold tracking-wide" style={{ borderColor: palette.brown, color: palette.brown, background: '#fff' }}>
+                {name}
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-center text-xs flex items-center justify-center gap-2" style={{ color: palette.brown }}>
+            <ShieldCheck className="w-4 h-4" /> Trusted by ambitious brands and operators
+          </p>
+        </div>
+      </section>
 
       {/* Results */}
       <section id="wins" className="relative py-20">
@@ -179,6 +227,31 @@ export default function App() {
                 </ul>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials with video */}
+      <section id="stories" className="py-20" style={{ background: palette.cream }}>
+        <div className="container mx-auto px-6">
+          <h2 className="text-4xl font-extrabold text-center" style={{ color: palette.dark }}>Client Stories</h2>
+          <p className="text-center mt-3" style={{ color: palette.brown }}>Short, real-world results. More in Case Studies.</p>
+          <div className="mt-10 grid md:grid-cols-3 gap-6">
+            {[
+              { label:'CPG Brand', desc:'+120% revenue in 90 days', src:'https://www.w3schools.com/html/mov_bbb.mp4' },
+              { label:'B2B SaaS', desc:'CAC -35% with lifecycle overhaul', src:'https://www.w3schools.com/html/movie.mp4' },
+              { label:'Marketplace', desc:'3.2x ROAS at scale', src:'https://www.w3schools.com/html/mov_bbb.mp4' },
+            ].map((v,i)=> (
+              <div key={i} className="rounded-2xl overflow-hidden border-2" style={{ borderColor: palette.brown, background: '#fff' }}>
+                <div className="p-4">
+                  <p className="text-xs font-bold" style={{ color: palette.orange }}>{v.label}</p>
+                  <p className="text-sm" style={{ color: palette.brown }}>{v.desc}</p>
+                </div>
+                <video controls className="w-full h-48 object-cover">
+                  <source src={v.src} type="video/mp4" />
+                </video>
+              </div>
+            ))}
           </div>
         </div>
       </section>
