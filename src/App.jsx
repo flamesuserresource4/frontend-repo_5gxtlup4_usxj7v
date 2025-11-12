@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Spline from '@splinetool/react-spline'
-import { BarChart3, Rocket, Target, LineChart, DollarSign, Mail, Hash, Layers, Tv, Star, Quote, ShieldCheck } from 'lucide-react'
+import { BarChart3, Rocket, Target, LineChart, DollarSign, Mail, Hash, Layers, Tv, Star, Quote, ShieldCheck, Award, Sparkles } from 'lucide-react'
 
 const palette = {
   cream: '#F8F1E7',
@@ -14,8 +14,7 @@ const palette = {
 function Badge({ label, value, icon: Icon, color }) {
   return (
     <div className="relative">
-      <div className="rounded-full px-6 py-4 border-4 shadow-[4px_6px_0_0_rgba(0,0,0,0.25)]" style={{
-        background: palette.cream,
+      <div className="rounded-full px-6 py-4 border-4 shadow-[4px_6px_0_0_rgba(0,0,0,0.25)] bg-white/90" style={{
         borderColor: color,
       }}>
         <div className="flex items-center gap-3">
@@ -34,9 +33,8 @@ function Badge({ label, value, icon: Icon, color }) {
 
 function ServiceCard({ title, desc, icon: Icon, color }) {
   return (
-    <div className="group rounded-2xl p-6 border-2 transition transform hover:-translate-y-1 hover:shadow-xl" style={{
+    <div className="group rounded-2xl p-6 border-2 transition transform hover:-translate-y-1 hover:shadow-xl bg-white/80 backdrop-blur" style={{
       borderColor: color,
-      background: 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7))',
     }}>
       <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: color }}>
         <Icon className="w-7 h-7 text-white" />
@@ -47,19 +45,28 @@ function ServiceCard({ title, desc, icon: Icon, color }) {
   )
 }
 
-function RetroEyes({ px = 0, py = 0 }) {
-  const eyeMoveX = px * 6
-  const eyeMoveY = py * 6
+function RetroTerminalEyes({ px = 0, py = 0 }) {
+  // Slightly dampen pointer for subtle movement
+  const eyeMoveX = Math.max(-1, Math.min(1, px)) * 6
+  const eyeMoveY = Math.max(-1, Math.min(1, py)) * 6
   return (
-    <div className="absolute -bottom-6 -left-6 sm:-left-10 w-44 rounded-2xl border-2 shadow-[6px_8px_0_rgba(0,0,0,0.25)]" style={{ background: palette.cream, borderColor: palette.brown }}>
-      <div className="px-4 pt-3 pb-4">
-        <div className="text-xs font-bold mb-2" style={{ color: palette.brown }}>RWS Retro Terminal</div>
-        <div className="mx-auto w-28 h-14 rounded-xl flex items-center justify-between px-3 py-2 border" style={{ borderColor: palette.brown, background: '#fff' }}>
+    <div className="relative w-[280px] sm:w-[320px] rounded-2xl border-2 shadow-[10px_12px_0_rgba(0,0,0,0.25)] overflow-hidden" style={{ borderColor: palette.brown, background: palette.cream }}>
+      <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: palette.brown }}>
+        <div className="flex items-center gap-1">
+          <span className="w-2.5 h-2.5 rounded-full" style={{ background: palette.orange }} />
+          <span className="w-2.5 h-2.5 rounded-full" style={{ background: palette.mustard }} />
+          <span className="w-2.5 h-2.5 rounded-full" style={{ background: palette.avocado }} />
+        </div>
+        <p className="text-[11px] font-bold tracking-wide" style={{ color: palette.brown }}>RWS Retro Terminal</p>
+      </div>
+      <div className="p-4">
+        <div className="mx-auto w-36 h-16 sm:w-40 sm:h-20 rounded-xl flex items-center justify-between px-3 py-2 border bg-white relative" style={{ borderColor: palette.brown }}>
           {[0,1].map(i => (
-            <div key={i} className="w-10 h-10 rounded-full flex items-center justify-center border" style={{ borderColor: palette.brown, background: palette.cream }}>
+            <div key={i} className="w-12 h-12 rounded-full flex items-center justify-center border" style={{ borderColor: palette.brown, background: palette.cream }}>
               <div className="w-3.5 h-3.5 rounded-full" style={{ background: palette.orange, transform: `translate(${eyeMoveX}px, ${eyeMoveY}px)` }} />
             </div>
           ))}
+          <div className="absolute inset-0 rounded-xl pointer-events-none" style={{ boxShadow: 'inset 0 0 30px rgba(0,0,0,0.06)' }} />
         </div>
       </div>
     </div>
@@ -98,37 +105,67 @@ export default function App() {
     }
   }
 
+  const heroTransform = useMemo(() => ({
+    transform: `translate3d(${cursor.px * 8}px, ${cursor.py * 8}px, 0) rotateX(${-cursor.py * 4}deg) rotateY(${cursor.px * 4}deg)`,
+    transformStyle: 'preserve-3d',
+    transition: 'transform 80ms linear',
+    willChange: 'transform',
+  }), [cursor])
+
   return (
     <div className="min-h-screen w-full overflow-x-hidden" style={{ background: palette.cream }}>
-      {/* Hero */}
+      {/* Full-bleed Hero with Spline background and readable overlay */}
       <header id="hero" className="relative w-full overflow-hidden" onMouseMove={onMouseMoveHero}>
-        <div className="container mx-auto px-6 grid lg:grid-cols-2 gap-6 items-center min-h-[86vh] pt-6">
-          <div className="relative">
-            <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 mb-5" style={{ background: palette.cream, border: `2px solid ${palette.orange}` }}>
-              <Star className="w-4 h-4" style={{ color: palette.orange }} />
-              <span className="text-xs font-bold tracking-wider" style={{ color: palette.brown }}>Woman-Owned • Results-Driven</span>
-            </div>
-            <h1 className="text-5xl sm:text-6xl font-extrabold leading-tight" style={{ color: palette.dark }}>
-              Marketing That Actually Makes Money
-            </h1>
-            <p className="mt-4 text-lg sm:text-xl" style={{ color: palette.brown }}>
-              We mix data, creativity, and a proven playbook to grow revenue—not vanity metrics.
-            </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <a href="#contact" className="rounded-full px-6 py-3 font-extrabold shadow-[4px_6px_0_0_rgba(0,0,0,0.25)]" style={{ background: palette.orange, color: 'white' }}>
-                Book Strategy Call
-              </a>
-              <a href="#wins" className="rounded-full px-6 py-3 font-extrabold border-2" style={{ borderColor: palette.mustard, color: palette.mustard, background: palette.dark }}>
-                See Our Wins
-              </a>
-            </div>
-            <RetroEyes px={cursor.px} py={cursor.py} />
+        {/* Background Spline */}
+        <div className="absolute inset-0 -z-10" style={{ perspective: '1000px' }}>
+          <div className="absolute inset-0" style={heroTransform}>
+            <Spline scene="https://prod.spline.design/S4k-6fqjuV5AuVZe/scene.splinecode" style={{ width: '100%', height: '100%' }} />
           </div>
-          <div className="relative h-[52vh] sm:h-[60vh] lg:h-[70vh] rounded-3xl border-4 overflow-hidden shadow-[10px_12px_0_rgba(0,0,0,0.25)]" style={{ borderColor: palette.brown }}>
-            <div className="absolute inset-0" style={{ transform: `translate3d(${cursor.px*12}px, ${cursor.py*12}px, 0) rotateX(${ -cursor.py*6 }deg) rotateY(${ cursor.px*6 }deg)`, transformStyle: 'preserve-3d', transition: 'transform 80ms linear' }}>
-              <Spline scene="https://prod.spline.design/S4k-6fqjuV5AuVZe/scene.splinecode" style={{ width: '100%', height: '100%' }} />
+          {/* Grain + color vignettes for vintage feel */}
+          <div className="absolute inset-0 pointer-events-none" style={{
+            backgroundImage:
+              'radial-gradient(circle at 20% 20%, rgba(209,106,26,0.20), transparent 45%), radial-gradient(circle at 80% 30%, rgba(226,176,54,0.18), transparent 35%), radial-gradient(circle at 50% 80%, rgba(123,161,111,0.18), transparent 40%)',
+          }} />
+          <div className="absolute inset-0 pointer-events-none opacity-[0.14] mix-blend-multiply" style={{
+            backgroundImage: 'url(https://grainy-gradients.vercel.app/noise.svg)',
+          }} />
+          {/* Subtle top/bottom fades to ensure contrast */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#191715]/60 via-transparent to-[#191715]/60 pointer-events-none" />
+        </div>
+
+        {/* Content overlay */}
+        <div className="container mx-auto px-6 min-h-[92vh] flex items-center">
+          <div className="grid lg:grid-cols-12 gap-8 w-full">
+            <div className="lg:col-span-7">
+              <div className="max-w-2xl rounded-3xl border-2 p-6 sm:p-8 bg-[#F8F1E7]/90 backdrop-blur-md shadow-[10px_12px_0_rgba(0,0,0,0.25)]" style={{ borderColor: palette.brown }}>
+                <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 mb-5 border" style={{ background: palette.cream, borderColor: palette.orange }}>
+                  <Sparkles className="w-4 h-4" style={{ color: palette.orange }} />
+                  <span className="text-xs font-bold tracking-wider" style={{ color: palette.brown }}>Woman-Owned • Results-Driven</span>
+                </div>
+                <h1 className="text-5xl sm:text-6xl font-extrabold leading-tight" style={{ color: palette.dark }}>
+                  Marketing That Actually Makes Money
+                </h1>
+                <p className="mt-4 text-lg sm:text-xl" style={{ color: palette.brown }}>
+                  We mix data, creativity, and a proven playbook to grow revenue—not vanity metrics.
+                </p>
+                <div className="mt-8 flex flex-wrap items-center gap-3">
+                  <a href="#contact" className="rounded-full px-6 py-3 font-extrabold shadow-[4px_6px_0_0_rgba(0,0,0,0.25)]" style={{ background: palette.orange, color: 'white' }}>
+                    Book Strategy Call
+                  </a>
+                  <a href="#wins" className="rounded-full px-6 py-3 font-extrabold border-2" style={{ borderColor: palette.mustard, color: palette.mustard, background: palette.dark }}>
+                    See Our Wins
+                  </a>
+                </div>
+              </div>
             </div>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(209,106,26,0.20),transparent_45%),radial-gradient(circle_at_80%_30%,rgba(226,176,54,0.20),transparent_35%),radial-gradient(circle_at_50%_80%,rgba(123,161,111,0.20),transparent_40%)] pointer-events-none"></div>
+
+            {/* Terminal eyes seated over the computer screen area (right side) */}
+            <div className="lg:col-span-5 flex items-end lg:items-center justify-end">
+              <div className="relative">
+                <RetroTerminalEyes px={cursor.px} py={cursor.py} />
+                <div className="absolute -inset-6 -z-10 rounded-[28px] blur-2xl opacity-60" style={{ background: `radial-gradient(50% 50% at 50% 50%, ${palette.mustard}33 0%, transparent 70%)` }} />
+              </div>
+            </div>
           </div>
         </div>
       </header>
@@ -138,7 +175,7 @@ export default function App() {
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-center gap-6 flex-wrap">
             {["ACME","ORBIT","SUNCO","PIONEER","ATLAS"].map((name,i)=> (
-              <div key={i} className="px-5 py-3 rounded-xl border-2 text-sm font-extrabold tracking-wide" style={{ borderColor: palette.brown, color: palette.brown, background: '#fff' }}>
+              <div key={i} className="px-5 py-3 rounded-xl border-2 text-sm font-extrabold tracking-wide bg-white" style={{ borderColor: palette.brown, color: palette.brown }}>
                 {name}
               </div>
             ))}
@@ -164,7 +201,7 @@ export default function App() {
 
           <div className="mt-12 grid md:grid-cols-3 gap-6">
             {[1,2,3].map((i) => (
-              <div key={i} className="rounded-2xl p-6 border-2" style={{ borderColor: palette.brown, background: 'linear-gradient(180deg, rgba(255,255,255,0.95), rgba(248,241,231,0.95))' }}>
+              <div key={i} className="rounded-2xl p-6 border-2 bg-gradient-to-b from-white to-[#F8F1E7]" style={{ borderColor: palette.brown }}>
                 <div className="flex items-start gap-3">
                   <Quote className="w-6 h-6" style={{ color: palette.orange }} />
                   <p className="text-sm" style={{ color: palette.brown }}>
@@ -204,11 +241,11 @@ export default function App() {
                 Our methodology focuses on measurable inputs and meaningful outcomes. Clear hypotheses, rapid testing, and dashboards that make the next move obvious.
               </p>
               <div className="mt-6 grid sm:grid-cols-2 gap-4">
-                <div className="rounded-xl p-4 border-2" style={{ borderColor: palette.mustard, background: 'white' }}>
+                <div className="rounded-xl p-4 border-2 bg-white" style={{ borderColor: palette.mustard }}>
                   <p className="font-bold" style={{ color: palette.dark }}>Trackable Results</p>
                   <p className="text-sm mt-1" style={{ color: palette.brown }}>Every campaign ships with reporting tied to revenue, not likes.</p>
                 </div>
-                <div className="rounded-xl p-4 border-2" style={{ borderColor: palette.orange, background: 'white' }}>
+                <div className="rounded-xl p-4 border-2 bg-white" style={{ borderColor: palette.orange }}>
                   <p className="font-bold" style={{ color: palette.dark }}>Proven Playbooks</p>
                   <p className="text-sm mt-1" style={{ color: palette.brown }}>We reuse what works and retire what doesn’t—fast.</p>
                 </div>
@@ -231,7 +268,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* Testimonials with video */}
+      {/* Client Stories with video */}
       <section id="stories" className="py-20" style={{ background: palette.cream }}>
         <div className="container mx-auto px-6">
           <h2 className="text-4xl font-extrabold text-center" style={{ color: palette.dark }}>Client Stories</h2>
@@ -242,12 +279,12 @@ export default function App() {
               { label:'B2B SaaS', desc:'CAC -35% with lifecycle overhaul', src:'https://www.w3schools.com/html/movie.mp4' },
               { label:'Marketplace', desc:'3.2x ROAS at scale', src:'https://www.w3schools.com/html/mov_bbb.mp4' },
             ].map((v,i)=> (
-              <div key={i} className="rounded-2xl overflow-hidden border-2" style={{ borderColor: palette.brown, background: '#fff' }}>
+              <div key={i} className="rounded-2xl overflow-hidden border-2 bg-white" style={{ borderColor: palette.brown }}>
                 <div className="p-4">
                   <p className="text-xs font-bold" style={{ color: palette.orange }}>{v.label}</p>
                   <p className="text-sm" style={{ color: palette.brown }}>{v.desc}</p>
                 </div>
-                <video controls className="w-full h-48 object-cover">
+                <video controls className="w-full h-48 object-cover" preload="metadata">
                   <source src={v.src} type="video/mp4" />
                 </video>
               </div>
@@ -277,7 +314,7 @@ export default function App() {
               </div>
             </div>
 
-            <form onSubmit={submitLead} className="rounded-2xl p-6 border-2" style={{ borderColor: palette.mustard, background: 'rgba(255,255,255,0.9)' }}>
+            <form onSubmit={submitLead} className="rounded-2xl p-6 border-2 bg-white/90 backdrop-blur" style={{ borderColor: palette.mustard }}>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold mb-1" style={{ color: palette.brown }}>Name</label>
