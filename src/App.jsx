@@ -140,16 +140,19 @@ export default function App() {
           <div className="absolute inset-0" style={heroTransform} aria-hidden="true">
             <Spline onLoad={onSplineLoad} scene="https://prod.spline.design/S4k-6fqjuV5AuVZe/scene.splinecode" style={{ width: '100%', height: '100%' }} />
           </div>
-          {/* Grain + color vignettes for vintage feel */}
-          <div className="absolute inset-0 pointer-events-none" style={{
-            backgroundImage:
-              'radial-gradient(circle at 20% 20%, rgba(209,106,26,0.20), transparent 45%), radial-gradient(circle at 80% 30%, rgba(226,176,54,0.18), transparent 35%), radial-gradient(circle at 50% 80%, rgba(123,161,111,0.18), transparent 40%)',
-          }} />
-          <div className="absolute inset-0 pointer-events-none opacity-[0.14] mix-blend-multiply" style={{
-            backgroundImage: 'url(https://grainy-gradients.vercel.app/noise.svg)',
-          }} />
-          {/* Subtle top/bottom fades to ensure contrast */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#191715]/60 via-transparent to-[#191715]/60 pointer-events-none" />
+
+          {/* Animated aurora blobs for depth */}
+          <div className="hero-aurora">
+            <div className="blob blob-1" />
+            <div className="blob blob-2" />
+            <div className="blob blob-3" />
+          </div>
+
+          {/* Subtle CRT scanlines */}
+          <div className="hero-scanlines" />
+          {/* Grain + vignette for vintage feel and contrast */}
+          <div className="hero-grain" />
+          <div className="hero-vignette" />
         </div>
 
         {/* Content overlay */}
