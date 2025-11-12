@@ -134,11 +134,12 @@ export default function App() {
   return (
     <div className="min-h-screen w-full overflow-x-hidden" style={{ background: palette.cream }}>
       {/* Full-bleed Hero with Spline background and floating content panel */}
-      <header id="hero" className="relative w-full overflow-hidden" onMouseMove={onMouseMoveHero} aria-label="Hero">
-        {/* Background Spline */}
-        <div className="absolute inset-0 -z-10" style={{ perspective: '1000px' }}>
+      <header id="hero" className="relative w-full min-h-screen overflow-hidden" onMouseMove={onMouseMoveHero} aria-label="Hero">
+        {/* Background stack */}
+        <div className="absolute inset-0 z-0" style={{ perspective: '1000px' }}>
+          {/* Spline Scene */}
           <div className="absolute inset-0" style={heroTransform} aria-hidden="true">
-            <Spline onLoad={onSplineLoad} scene="https://prod.spline.design/S4k-6fqjuV5AuVZe/scene.splinecode" style={{ width: '100%', height: '100%' }} />
+            <Spline onLoad={onSplineLoad} scene="https://prod.spline.design/S4k-6fqjuV5AuVZe/scene.splinecode" style={{ width: '100%', height: '100%', pointerEvents: 'none' }} />
           </div>
 
           {/* Animated aurora blobs for depth */}
@@ -156,7 +157,7 @@ export default function App() {
         </div>
 
         {/* Content overlay */}
-        <div className="container mx-auto px-6 min-h-[92vh] flex items-center">
+        <div className="relative z-10 container mx-auto px-6 min-h-[92vh] flex items-center">
           <div className="grid lg:grid-cols-12 gap-8 w-full">
             <div className="lg:col-span-7">
               <div className="max-w-2xl rounded-3xl border-2 p-6 sm:p-8 bg-[#F8F1E7]/90 backdrop-blur-md shadow-[10px_12px_0_rgba(0,0,0,0.25)]" style={{ borderColor: palette.brown }}>
