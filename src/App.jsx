@@ -1,5 +1,6 @@
-import { useMemo, useRef, useState } from 'react'
-import Spline from '@splinetool/react-spline'
+import { lazy, Suspense, useMemo, useRef, useState } from 'react'
+// Lazy-load Spline for performance
+const Spline = lazy(() => import('@splinetool/react-spline'))
 import { BarChart3, Rocket, Target, LineChart, DollarSign, Mail, Hash, Layers, Tv, Quote, ShieldCheck, Award, Sparkles, CheckCircle2, Clock, Workflow, ChevronDown, Megaphone, Users, X } from 'lucide-react'
 
 const palette = {
@@ -93,7 +94,6 @@ export default function App() {
       const obj = spline.findObjectByName?.(name)
       if (obj) { monitorRef.current = obj; break }
     }
-    // Ensure zeroed baseline to avoid initial wobble
     if (monitorRef.current && monitorRef.current.rotation) {
       monitorRef.current.rotation.x = 0
       monitorRef.current.rotation.y = 0
@@ -148,8 +148,10 @@ export default function App() {
         {/* Background stack */}
         <div className="absolute inset-0 z-0">
           {/* Spline Scene (locked in place) */}
-          <div className="absolute inset-0 transform lg:translate-x-[15%]" aria-hidden="true">
-            <Spline onLoad={onSplineLoad} scene="https://prod.spline.design/S4k-6fqjuV5AuVZe/scene.splinecode" style={{ width: '100%', height: '100%', pointerEvents: 'none' }} />
+          <div className="absolute inset-0 lg:translate-x-[15%]" aria-hidden="true">
+            <Suspense fallback={<div className="w-full h-full" style={{ background: 'radial-gradient(ellipse at 60% 40%, rgba(209,106,26,0.25), transparent 40%)' }} />}> 
+              <Spline onLoad={onSplineLoad} scene="https://prod.spline.design/S4k-6fqjuV5AuVZe/scene.splinecode" style={{ width: '100%', height: '100%', pointerEvents: 'none' }} />
+            </Suspense>
           </div>
 
           {/* Animated aurora blobs for depth */}
@@ -166,8 +168,13 @@ export default function App() {
           <div className="hero-vignette" />
         </div>
 
+        {/* Readability shield behind content (left column) */}
+        <div className="absolute inset-0 z-[1] pointer-events-none">
+          <div className="h-full w-full lg:w-[60%]" style={{ background: 'linear-gradient(90deg, rgba(248,241,231,0.95) 0%, rgba(248,241,231,0.80) 35%, rgba(248,241,231,0.00) 75%)' }} />
+        </div>
+
         {/* Content overlay */}
-        <div className="relative z-10 container mx-auto px-6 min-h-[92vh] flex items-center">
+        <div className="relative z-10 container mx-auto px-6 min-h-screen flex items-center">
           <div className="grid lg:grid-cols-12 gap-8 w-full">
             <div className="lg:col-span-7">
               <div className="max-w-2xl rounded-3xl border-2 p-6 sm:p-8 glass-card" style={{ borderColor: palette.brown }}>
