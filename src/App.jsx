@@ -1,7 +1,7 @@
-import { lazy, Suspense, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useMemo, useRef, useState, useEffect } from 'react'
 // Lazy-load Spline for performance
 const Spline = lazy(() => import('@splinetool/react-spline'))
-import { BarChart3, Rocket, Target, LineChart, DollarSign, Mail, Hash, Layers, Tv, Quote, ShieldCheck, Award, Sparkles, CheckCircle2, Clock, Workflow, ChevronDown, Megaphone, Users, X, ArrowRight } from 'lucide-react'
+import { BarChart3, Rocket, Target, LineChart, DollarSign, Mail, Hash, Layers, Tv, Quote, ShieldCheck, Award, Sparkles, CheckCircle2, Clock, Workflow, ChevronDown, Megaphone, Users, X, ArrowRight, User } from 'lucide-react'
 
 const palette = {
   cream: '#F8F1E7',
@@ -80,10 +80,20 @@ export default function App() {
   const [status, setStatus] = useState({ state: 'idle', message: '' })
   const [cursor, setCursor] = useState({ px: 0, py: 0 })
   const [showCalendar, setShowCalendar] = useState(false)
+  const [showAuth, setShowAuth] = useState(false)
+  const [authMode, setAuthMode] = useState('login') // 'login' | 'register'
+  const [auth, setAuth] = useState({ email: '', password: '', name: '' })
+  const [authStatus, setAuthStatus] = useState({ state: 'idle', message: '' })
+  const [token, setToken] = useState('')
   const splineRef = useRef(null)
   const monitorRef = useRef(null)
   const rafRef = useRef(0)
   const backendBase = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
+
+  useEffect(() => {
+    const t = localStorage.getItem('cms_token')
+    if (t) setToken(t)
+  }, [])
 
   const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -151,8 +161,75 @@ export default function App() {
     { name: 'Orbit', src: 'https://dummyimage.com/160x64/000/fff&text=ORBIT' },
   ]
 
+  const loginSubmit = async (e) => {
+    e.preventDefault()
+    setAuthStatus({ state: 'loading', message: 'Signing in...' })
+    try {
+      const body = new URLSearchParams()
+      body.append('username', auth.email)
+      body.append('password', auth.password)
+      const res = await fetch(`${backendBase}/auth/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body,
+      })
+      if (!res.ok) throw new Error(await res.text())
+      const data = await res.json()
+      localStorage.setItem('cms_token', data.access_token)
+      setToken(data.access_token)
+      setAuthStatus({ state: 'success', message: 'Signed in!' })
+      setTimeout(() => setShowAuth(false), 600)
+    } catch (err) {
+      setAuthStatus({ state: 'error', message: 'Login failed. Check email/password.' })
+    }
+  }
+
+  const registerSubmit = async (e) => {
+    e.preventDefault()
+    setAuthStatus({ state: 'loading', message: 'Creating account...' })
+    try {
+      const res = await fetch(`${backendBase}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: auth.email, password: auth.password, name: auth.name || undefined }),
+      })
+      if (!res.ok) throw new Error(await res.text())
+      const data = await res.json()
+      localStorage.setItem('cms_token', data.access_token)
+      setToken(data.access_token)
+      setAuthStatus({ state: 'success', message: 'Account created!' })
+      setTimeout(() => setShowAuth(false), 600)
+    } catch (err) {
+      setAuthStatus({ state: 'error', message: 'Registration failed. Try a different email.' })
+    }
+  }
+
+  const signOut = () => {
+    localStorage.removeItem('cms_token')
+    setToken('')
+  }
+
+  const isAuthed = !!token
+
   return (
     <div className="min-h-screen w-full overflow-x-hidden" style={{ background: palette.cream }}>
+      {/* Login icon button (top-right) */}
+      <div className="fixed top-4 right-4 z-[60]">
+        <div className="flex items-center gap-2">
+          {isAuthed && (
+            <span className="text-[10px] font-bold px-2 py-1 rounded-full border" style={{ color: palette.dark, borderColor: palette.mustard, background: '#fff8' }}>Admin</span>
+          )}
+          <button aria-label={isAuthed ? 'Account' : 'Log in'} onClick={() => setShowAuth(true)} className="rounded-full p-2 border-2 backdrop-blur bg-white/70 lift-card hover:bg-white transition" style={{ borderColor: palette.brown }}>
+            <User className="w-5 h-5" style={{ color: palette.dark }} />
+          </button>
+          {isAuthed && (
+            <button onClick={signOut} className="rounded-full px-3 py-1 text-xs font-bold border-2 hover:bg-white transition" style={{ borderColor: palette.orange, color: palette.orange }}>
+              Sign out
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Full-bleed Hero with Spline background and floating content panel */}
       <header id="hero" className="relative w-full min-h-screen overflow-hidden" onMouseMove={onMouseMoveHero} aria-label="Hero">
         {/* Background stack */}
@@ -530,6 +607,53 @@ export default function App() {
           <p className="text-xs mt-8 text-center" style={{ color: '#C8BBAA' }}>© {new Date().getFullYear()} Running With Strategy. All rights reserved.</p>
         </div>
       </footer>
+
+      {/* Auth modal */}
+      {showAuth && (
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[70] flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowAuth(false)} />
+          <div className="relative w-full max-w-md rounded-2xl border-2 glass-card" style={{ borderColor: palette.brown, background: 'rgba(255,255,255,0.85)' }}>
+            <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: palette.brown }}>
+              <div className="inline-flex items-center gap-2">
+                <User className="w-5 h-5" />
+                <p className="font-extrabold" style={{ color: palette.dark }}>{authMode === 'login' ? 'Sign in' : 'Create admin'}</p>
+              </div>
+              <button aria-label="Close" onClick={() => setShowAuth(false)} className="rounded-lg p-1 border" style={{ borderColor: palette.brown }}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <form onSubmit={authMode === 'login' ? loginSubmit : registerSubmit} className="p-5 space-y-3">
+              {authMode === 'register' && (
+                <div>
+                  <label className="block text-xs font-bold mb-1" style={{ color: palette.brown }}>Name (optional)</label>
+                  <input value={auth.name} onChange={(e)=>setAuth({ ...auth, name: e.target.value })} className="w-full rounded-lg px-3 py-2 border focus:outline-none focus:ring-2" style={{ borderColor: palette.mustard }} placeholder="Jane Doe" />
+                </div>
+              )}
+              <div>
+                <label className="block text-xs font-bold mb-1" style={{ color: palette.brown }}>Email</label>
+                <input required type="email" value={auth.email} onChange={(e)=>setAuth({ ...auth, email: e.target.value })} className="w-full rounded-lg px-3 py-2 border focus:outline-none focus:ring-2" style={{ borderColor: palette.mustard }} placeholder="you@company.com" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold mb-1" style={{ color: palette.brown }}>Password</label>
+                <input required type="password" value={auth.password} onChange={(e)=>setAuth({ ...auth, password: e.target.value })} className="w-full rounded-lg px-3 py-2 border focus:outline-none focus:ring-2" style={{ borderColor: palette.mustard }} placeholder="••••••••" />
+              </div>
+              <button type="submit" className="w-full rounded-full px-6 py-2.5 font-extrabold shadow-[4px_6px_0_0_rgba(0,0,0,0.25)]" style={{ background: palette.orange, color: 'white' }}>
+                {authMode === 'login' ? (authStatus.state === 'loading' ? 'Signing in...' : 'Sign in') : (authStatus.state === 'loading' ? 'Creating...' : 'Create account')}
+              </button>
+              {authStatus.state !== 'idle' && (
+                <p className="text-center text-xs" style={{ color: authStatus.state === 'success' ? palette.avocado : palette.orange }}>{authStatus.message}</p>
+              )}
+              <div className="text-center text-xs" style={{ color: palette.brown }}>
+                {authMode === 'login' ? (
+                  <button type="button" onClick={() => { setAuthMode('register'); setAuthStatus({ state: 'idle', message: '' }) }} className="underline">Need an account? Create one</button>
+                ) : (
+                  <button type="button" onClick={() => { setAuthMode('login'); setAuthStatus({ state: 'idle', message: '' }) }} className="underline">Have an account? Sign in</button>
+                )}
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
