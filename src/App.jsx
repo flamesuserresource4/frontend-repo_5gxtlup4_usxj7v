@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import Spline from '@splinetool/react-spline'
-import { BarChart3, Rocket, Target, LineChart, DollarSign, Mail, Hash, Layers, Tv, Star, Quote, ShieldCheck, Award, Sparkles } from 'lucide-react'
+import { BarChart3, Rocket, Target, LineChart, DollarSign, Mail, Hash, Layers, Tv, Quote, ShieldCheck, Award, Sparkles, CheckCircle2, Clock, Workflow, ChevronDown, Megaphone, Users } from 'lucide-react'
 
 const palette = {
   cream: '#F8F1E7',
@@ -45,30 +45,17 @@ function ServiceCard({ title, desc, icon: Icon, color }) {
   )
 }
 
-function RetroTerminalEyes({ px = 0, py = 0 }) {
-  // Slightly dampen pointer for subtle movement
-  const eyeMoveX = Math.max(-1, Math.min(1, px)) * 6
-  const eyeMoveY = Math.max(-1, Math.min(1, py)) * 6
+function FAQ({ q, a, i }) {
+  const [open, setOpen] = useState(false)
   return (
-    <div className="relative w-[280px] sm:w-[320px] rounded-2xl border-2 shadow-[10px_12px_0_rgba(0,0,0,0.25)] overflow-hidden" style={{ borderColor: palette.brown, background: palette.cream }}>
-      <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: palette.brown }}>
-        <div className="flex items-center gap-1">
-          <span className="w-2.5 h-2.5 rounded-full" style={{ background: palette.orange }} />
-          <span className="w-2.5 h-2.5 rounded-full" style={{ background: palette.mustard }} />
-          <span className="w-2.5 h-2.5 rounded-full" style={{ background: palette.avocado }} />
-        </div>
-        <p className="text-[11px] font-bold tracking-wide" style={{ color: palette.brown }}>RWS Retro Terminal</p>
-      </div>
-      <div className="p-4">
-        <div className="mx-auto w-36 h-16 sm:w-40 sm:h-20 rounded-xl flex items-center justify-between px-3 py-2 border bg-white relative" style={{ borderColor: palette.brown }}>
-          {[0,1].map(i => (
-            <div key={i} className="w-12 h-12 rounded-full flex items-center justify-center border" style={{ borderColor: palette.brown, background: palette.cream }}>
-              <div className="w-3.5 h-3.5 rounded-full" style={{ background: palette.orange, transform: `translate(${eyeMoveX}px, ${eyeMoveY}px)` }} />
-            </div>
-          ))}
-          <div className="absolute inset-0 rounded-xl pointer-events-none" style={{ boxShadow: 'inset 0 0 30px rgba(0,0,0,0.06)' }} />
-        </div>
-      </div>
+    <div className="border-2 rounded-xl bg-white/90 backdrop-blur" style={{ borderColor: i % 2 ? palette.mustard : palette.orange }}>
+      <button aria-expanded={open} onClick={() => setOpen(v=>!v)} className="w-full flex items-center justify-between text-left px-4 py-3">
+        <span className="font-bold" style={{ color: palette.dark }}>{q}</span>
+        <ChevronDown className={`w-5 h-5 transition-transform ${open ? 'rotate-180' : ''}`} style={{ color: palette.brown }} />
+      </button>
+      {open && (
+        <div className="px-4 pb-4 text-sm" style={{ color: palette.brown }}>{a}</div>
+      )}
     </div>
   )
 }
@@ -77,7 +64,35 @@ export default function App() {
   const [form, setForm] = useState({ name: '', email: '', company: '', revenue_goal: '' })
   const [status, setStatus] = useState({ state: 'idle', message: '' })
   const [cursor, setCursor] = useState({ px: 0, py: 0 })
+  const splineRef = useRef(null)
+  const monitorRef = useRef(null)
+  const rafRef = useRef(0)
   const backendBase = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
+
+  const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  const onSplineLoad = (spline) => {
+    splineRef.current = spline
+    // Try to find a likely monitor/screen object by common names
+    const candidates = ['Screen','Monitor','Display','CRT','Glass','Monitor_Screen','screen','monitor','CRT_Screen']
+    for (const name of candidates) {
+      const obj = spline.findObjectByName?.(name)
+      if (obj) { monitorRef.current = obj; break }
+    }
+  }
+
+  const aimMonitor = (px, py) => {
+    const monitor = monitorRef.current
+    if (!monitor) return
+    // Gentle tilt: radians
+    const maxTilt = 0.22 // ~12.5deg
+    const rx = py * maxTilt
+    const ry = -px * maxTilt
+    // Apply rotation; keep z stable
+    monitor.rotation.x = rx
+    monitor.rotation.y = ry
+    monitor.rotation.z = monitor.rotation.z || 0
+  }
 
   const onMouseMoveHero = (e) => {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -86,6 +101,10 @@ export default function App() {
     const px = (x - 0.5) * 2
     const py = (y - 0.5) * 2
     setCursor({ px, py })
+
+    if (prefersReducedMotion) return
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    rafRef.current = requestAnimationFrame(() => aimMonitor(px, py))
   }
 
   const submitLead = async (e) => {
@@ -114,12 +133,12 @@ export default function App() {
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden" style={{ background: palette.cream }}>
-      {/* Full-bleed Hero with Spline background and readable overlay */}
-      <header id="hero" className="relative w-full overflow-hidden" onMouseMove={onMouseMoveHero}>
+      {/* Full-bleed Hero with Spline background and floating content panel */}
+      <header id="hero" className="relative w-full overflow-hidden" onMouseMove={onMouseMoveHero} aria-label="Hero">
         {/* Background Spline */}
         <div className="absolute inset-0 -z-10" style={{ perspective: '1000px' }}>
-          <div className="absolute inset-0" style={heroTransform}>
-            <Spline scene="https://prod.spline.design/S4k-6fqjuV5AuVZe/scene.splinecode" style={{ width: '100%', height: '100%' }} />
+          <div className="absolute inset-0" style={heroTransform} aria-hidden="true">
+            <Spline onLoad={onSplineLoad} scene="https://prod.spline.design/S4k-6fqjuV5AuVZe/scene.splinecode" style={{ width: '100%', height: '100%' }} />
           </div>
           {/* Grain + color vignettes for vintage feel */}
           <div className="absolute inset-0 pointer-events-none" style={{
@@ -156,41 +175,67 @@ export default function App() {
                     See Our Wins
                   </a>
                 </div>
+                {/* Quick proof row */}
+                <div className="mt-6 grid grid-cols-2 gap-3" role="list" aria-label="Highlights">
+                  <div className="flex items-center gap-2 text-sm" style={{ color: palette.brown }}><CheckCircle2 className="w-4 h-4" style={{ color: palette.avocado }} />Revenue-first approach</div>
+                  <div className="flex items-center gap-2 text-sm" style={{ color: palette.brown }}><CheckCircle2 className="w-4 h-4" style={{ color: palette.avocado }} />Transparent reporting</div>
+                  <div className="flex items-center gap-2 text-sm" style={{ color: palette.brown }}><CheckCircle2 className="w-4 h-4" style={{ color: palette.avocado }} />Fast testing cycles</div>
+                  <div className="flex items-center gap-2 text-sm" style={{ color: palette.brown }}><CheckCircle2 className="w-4 h-4" style={{ color: palette.avocado }} />Senior operators only</div>
+                </div>
               </div>
             </div>
 
-            {/* Terminal eyes seated over the computer screen area (right side) */}
-            <div className="lg:col-span-5 flex items-end lg:items-center justify-end">
-              <div className="relative">
-                <RetroTerminalEyes px={cursor.px} py={cursor.py} />
-                <div className="absolute -inset-6 -z-10 rounded-[28px] blur-2xl opacity-60" style={{ background: `radial-gradient(50% 50% at 50% 50%, ${palette.mustard}33 0%, transparent 70%)` }} />
+            {/* Right side: floating KPIs to add depth without blocking scene */}
+            <div className="lg:col-span-5 hidden lg:flex items-center justify-end">
+              <div className="grid gap-4 will-change-transform" style={{ transform: `translate3d(${cursor.px * 6}px, ${cursor.py * 4}px, 0)` }}>
+                <div className="rounded-2xl px-5 py-4 border-2 bg-white/80 backdrop-blur shadow-sm" style={{ borderColor: palette.mustard }}>
+                  <div className="flex items-center gap-3">
+                    <Award className="w-5 h-5" style={{ color: palette.mustard }} />
+                    <p className="text-sm font-bold" style={{ color: palette.brown }}>5.4x Avg ROAS</p>
+                  </div>
+                </div>
+                <div className="rounded-2xl px-5 py-4 border-2 bg-white/80 backdrop-blur shadow-sm" style={{ borderColor: palette.orange }}>
+                  <div className="flex items-center gap-3">
+                    <Users className="w-5 h-5" style={{ color: palette.orange }} />
+                    <p className="text-sm font-bold" style={{ color: palette.brown }}>38k+ Leads Generated</p>
+                  </div>
+                </div>
+                <div className="rounded-2xl px-5 py-4 border-2 bg-white/80 backdrop-blur shadow-sm" style={{ borderColor: palette.avocado }}>
+                  <div className="flex items-center gap-3">
+                    <Megaphone className="w-5 h-5" style={{ color: palette.avocado }} />
+                    <p className="text-sm font-bold" style={{ color: palette.brown }}>900+ Campaigns Launched</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Credibility strip */}
-      <section className="py-10">
-        <div className="container mx-auto px-6">
-          <div className="flex items-center justify-center gap-6 flex-wrap">
-            {["ACME","ORBIT","SUNCO","PIONEER","ATLAS"].map((name,i)=> (
-              <div key={i} className="px-5 py-3 rounded-xl border-2 text-sm font-extrabold tracking-wide bg-white" style={{ borderColor: palette.brown, color: palette.brown }}>
-                {name}
-              </div>
+      {/* Moving brand marquee */}
+      <section className="py-8" aria-label="Brand marquee">
+        <div className="overflow-hidden">
+          <div className="flex items-center gap-10 animate-[marquee_28s_linear_infinite] whitespace-nowrap px-6" style={{ color: palette.brown }}>
+            {['ACME','ORBIT','SUNCO','PIONEER','ATLAS','NOVA','VECTOR','LUMEN'].map((n,i)=> (
+              <span key={i} className="inline-flex items-center gap-2 text-xs font-extrabold tracking-[0.18em] opacity-80">
+                <ShieldCheck className="w-4 h-4" /> {n}
+              </span>
+            ))}
+            {['ACME','ORBIT','SUNCO','PIONEER','ATLAS','NOVA','VECTOR','LUMEN'].map((n,i)=> (
+              <span key={`d-${i}`} className="inline-flex items-center gap-2 text-xs font-extrabold tracking-[0.18em] opacity-80">
+                <ShieldCheck className="w-4 h-4" /> {n}
+              </span>
             ))}
           </div>
-          <p className="mt-3 text-center text-xs flex items-center justify-center gap-2" style={{ color: palette.brown }}>
-            <ShieldCheck className="w-4 h-4" /> Trusted by ambitious brands and operators
-          </p>
         </div>
+        <style>{`@keyframes marquee {0%{transform:translateX(0)}100%{transform:translateX(-50%)}}`}</style>
       </section>
 
       {/* Results */}
-      <section id="wins" className="relative py-20">
+      <section id="wins" className="relative py-20" aria-labelledby="wins-heading">
         <div className="absolute inset-0 -z-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 10% 10%, #D16A1A 0, transparent 40%), radial-gradient(circle at 90% 20%, #E2B036 0, transparent 35%), radial-gradient(circle at 30% 90%, #7BA16F 0, transparent 40%)' }} />
         <div className="relative container mx-auto px-6">
-          <h2 className="text-4xl font-extrabold text-center" style={{ color: palette.dark }}>Proven Revenue Growth</h2>
+          <h2 id="wins-heading" className="text-4xl font-extrabold text-center" style={{ color: palette.dark }}>Proven Revenue Growth</h2>
           <p className="text-center mt-3" style={{ color: palette.brown }}>Numbers that make accountants smile.</p>
           <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <Badge label="Avg ROAS" value="5.4x" icon={BarChart3} color={palette.orange} />
@@ -199,9 +244,9 @@ export default function App() {
             <Badge label="Campaigns Launched" value="900+" icon={Rocket} color={palette.brown} />
           </div>
 
-          <div className="mt-12 grid md:grid-cols-3 gap-6">
+          <div className="mt-12 grid md:grid-cols-3 gap-6" aria-label="Testimonials" role="list">
             {[1,2,3].map((i) => (
-              <div key={i} className="rounded-2xl p-6 border-2 bg-gradient-to-b from-white to-[#F8F1E7]" style={{ borderColor: palette.brown }}>
+              <div key={i} className="rounded-2xl p-6 border-2 bg-gradient-to-b from-white to-[#F8F1E7]" style={{ borderColor: palette.brown }} role="listitem">
                 <div className="flex items-start gap-3">
                   <Quote className="w-6 h-6" style={{ color: palette.orange }} />
                   <p className="text-sm" style={{ color: palette.brown }}>
@@ -216,9 +261,9 @@ export default function App() {
       </section>
 
       {/* Services */}
-      <section id="services" className="py-20" style={{ background: palette.dark }}>
+      <section id="services" className="py-20" style={{ background: palette.dark }} aria-labelledby="services-heading">
         <div className="container mx-auto px-6">
-          <h2 className="text-4xl font-extrabold text-center" style={{ color: palette.cream }}>Full-Funnel Services</h2>
+          <h2 id="services-heading" className="text-4xl font-extrabold text-center" style={{ color: palette.cream }}>Full-Funnel Services</h2>
           <p className="text-center mt-3" style={{ color: '#C8BBAA' }}>Everything you need to grow—done with retro flair and modern precision.</p>
           <div className="mt-10 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <ServiceCard title="SEO" desc="Revenue-first SEO: technical, content, and authority building for real growth." icon={LineChart} color={palette.mustard} />
@@ -231,12 +276,12 @@ export default function App() {
         </div>
       </section>
 
-      {/* Why Different */}
-      <section id="why" className="py-20">
+      {/* Process / Why Different with timeline */}
+      <section id="why" className="py-20" aria-labelledby="why-heading">
         <div className="container mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-10 items-center">
             <div>
-              <h2 className="text-4xl font-extrabold" style={{ color: palette.dark }}>Data Over Guesswork</h2>
+              <h2 id="why-heading" className="text-4xl font-extrabold" style={{ color: palette.dark }}>Data Over Guesswork</h2>
               <p className="mt-4 leading-relaxed" style={{ color: palette.brown }}>
                 Our methodology focuses on measurable inputs and meaningful outcomes. Clear hypotheses, rapid testing, and dashboards that make the next move obvious.
               </p>
@@ -253,25 +298,30 @@ export default function App() {
             </div>
             <div className="rounded-3xl p-1" style={{ background: `linear-gradient(135deg, ${palette.orange}, ${palette.mustard})` }}>
               <div className="rounded-2xl p-8" style={{ background: palette.cream }}>
-                <h3 className="text-2xl font-extrabold" style={{ color: palette.dark }}>Content Engine</h3>
-                <p className="mt-2 text-sm" style={{ color: palette.brown }}>
-                  Our all-in-one content system turns strategy into a weekly drumbeat: briefs, production, edits, approvals, and distribution—on repeat.
-                </p>
-                <ul className="mt-4 space-y-2 text-sm" style={{ color: palette.brown }}>
-                  <li>• Modular content mapped to funnel stages</li>
-                  <li>• Asset library with versioning</li>
-                  <li>• Performance scorecards per channel</li>
-                </ul>
+                <h3 className="text-2xl font-extrabold flex items-center gap-2" style={{ color: palette.dark }}><Workflow className="w-5 h-5" /> Our Process</h3>
+                <ol className="mt-4 space-y-4">
+                  {[{t:'Discover',d:'Audit, ICP, messaging, and goals alignment.',i:Clock},{t:'Plan',d:'Roadmap KPIs, experiments, and resourcing.',i:Target},{t:'Execute',d:'Rapid sprints across channels.',i:Rocket},{t:'Optimize',d:'Double-down on winners. Cut what doesn’t work.',i:LineChart}].map((step, idx)=> (
+                    <li key={idx} className="flex gap-3">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: idx%2?palette.mustard:palette.orange }}>
+                        <step.i className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-bold" style={{ color: palette.dark }}>{step.t}</p>
+                        <p className="text-sm" style={{ color: palette.brown }}>{step.d}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Client Stories with video */}
-      <section id="stories" className="py-20" style={{ background: palette.cream }}>
+      {/* Client Stories with video (lazy) */}
+      <section id="stories" className="py-20" style={{ background: palette.cream }} aria-labelledby="stories-heading">
         <div className="container mx-auto px-6">
-          <h2 className="text-4xl font-extrabold text-center" style={{ color: palette.dark }}>Client Stories</h2>
+          <h2 id="stories-heading" className="text-4xl font-extrabold text-center" style={{ color: palette.dark }}>Client Stories</h2>
           <p className="text-center mt-3" style={{ color: palette.brown }}>Short, real-world results. More in Case Studies.</p>
           <div className="mt-10 grid md:grid-cols-3 gap-6">
             {[
@@ -284,7 +334,7 @@ export default function App() {
                   <p className="text-xs font-bold" style={{ color: palette.orange }}>{v.label}</p>
                   <p className="text-sm" style={{ color: palette.brown }}>{v.desc}</p>
                 </div>
-                <video controls className="w-full h-48 object-cover" preload="metadata">
+                <video controls className="w-full h-48 object-cover" preload="none" playsInline>
                   <source src={v.src} type="video/mp4" />
                 </video>
               </div>
@@ -293,12 +343,25 @@ export default function App() {
         </div>
       </section>
 
+      {/* FAQs */}
+      <section aria-labelledby="faq-heading" className="py-20">
+        <div className="container mx-auto px-6">
+          <h2 id="faq-heading" className="text-4xl font-extrabold text-center" style={{ color: palette.dark }}>FAQs</h2>
+          <div className="mt-8 grid md:grid-cols-2 gap-4">
+            <FAQ q="How fast can we start?" a="Discovery is usually within 3 days. Launch in 1–2 weeks depending on scope." i={0} />
+            <FAQ q="What industries do you specialize in?" a="CPG, SaaS, marketplaces, and service businesses with clear revenue goals." i={1} />
+            <FAQ q="How do you report on results?" a="Weekly scorecards and monthly deep dives tied to revenue, CAC, and LTV." i={2} />
+            <FAQ q="Who will I work with?" a="A senior operator and a dedicated channel specialist—no hand-offs or bloat." i={3} />
+          </div>
+        </div>
+      </section>
+
       {/* Final CTA + Contact */}
-      <section id="contact" className="py-20" style={{ background: palette.dark }}>
+      <section id="contact" className="py-20" style={{ background: palette.dark }} aria-labelledby="contact-heading">
         <div className="container mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-12 items-start">
             <div>
-              <h2 className="text-4xl font-extrabold" style={{ color: palette.cream }}>Start Growing Your Revenue</h2>
+              <h2 id="contact-heading" className="text-4xl font-extrabold" style={{ color: palette.cream }}>Start Growing Your Revenue</h2>
               <p className="mt-3" style={{ color: '#C8BBAA' }}>Tell us a bit about your goals and we’ll follow up with a plan.</p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <a href="#contact" className="rounded-full px-6 py-3 font-extrabold shadow-[4px_6px_0_0_rgba(0,0,0,0.35)]" style={{ background: palette.mustard, color: palette.dark }}>Start Now</a>
