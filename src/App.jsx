@@ -1,7 +1,7 @@
 import { lazy, Suspense, useMemo, useRef, useState } from 'react'
 // Lazy-load Spline for performance
 const Spline = lazy(() => import('@splinetool/react-spline'))
-import { BarChart3, Rocket, Target, LineChart, DollarSign, Mail, Hash, Layers, Tv, Quote, ShieldCheck, Award, Sparkles, CheckCircle2, Clock, Workflow, ChevronDown, Megaphone, Users, X } from 'lucide-react'
+import { BarChart3, Rocket, Target, LineChart, DollarSign, Mail, Hash, Layers, Tv, Quote, ShieldCheck, Award, Sparkles, CheckCircle2, Clock, Workflow, ChevronDown, Megaphone, Users, X, ArrowRight } from 'lucide-react'
 
 const palette = {
   cream: '#F8F1E7',
@@ -58,20 +58,20 @@ function FAQ({ q, a, i }) {
   )
 }
 
-function CaseCard({ title, tag, metric, desc, color }) {
+function CaseCard({ title, tag, metric, desc, color, href = '/cases' }) {
   return (
-    <div className="relative rounded-2xl border-2 overflow-hidden lift-card bg-gradient-to-b from-white to-[#F8F1E7]" style={{ borderColor: color }}>
+    <a href={href} className="relative rounded-2xl border-2 overflow-hidden lift-card bg-gradient-to-b from-white to-[#F8F1E7] focus:outline-none focus:ring-2 focus:ring-offset-2" style={{ borderColor: color }}>
       <div className="absolute top-4 left-4 text-[10px] font-black tracking-wider px-3 py-1 rounded-full" style={{ background: color, color: 'white' }}>{tag}</div>
-      <div className="p-6">
+      <div className="p-6 pt-12">
         <p className="text-xs font-bold opacity-80" style={{ color: palette.brown }}>{title}</p>
         <p className="mt-1 text-3xl font-extrabold" style={{ color: palette.dark }}>{metric}</p>
         <p className="mt-2 text-sm" style={{ color: palette.brown }}>{desc}</p>
         <div className="mt-4 inline-flex items-center gap-2 text-xs font-bold" style={{ color: color }}>
           <span>How we did it</span>
-          <span aria-hidden>→</span>
+          <ArrowRight className="w-4 h-4" />
         </div>
       </div>
-    </div>
+    </a>
   )
 }
 
@@ -141,12 +141,25 @@ export default function App() {
     }
   }
 
+  // Partner logos (swap sources as needed)
+  const partners = [
+    { name: 'Atlas', src: 'https://dummyimage.com/160x64/000/fff&text=ATLAS' },
+    { name: 'Vector', src: 'https://dummyimage.com/160x64/000/fff&text=VECTOR' },
+    { name: 'Nova', src: 'https://dummyimage.com/160x64/000/fff&text=NOVA' },
+    { name: 'Pioneer', src: 'https://dummyimage.com/160x64/000/fff&text=PIONEER' },
+    { name: 'Lumen', src: 'https://dummyimage.com/160x64/000/fff&text=LUMEN' },
+    { name: 'Orbit', src: 'https://dummyimage.com/160x64/000/fff&text=ORBIT' },
+  ]
+
   return (
     <div className="min-h-screen w-full overflow-x-hidden" style={{ background: palette.cream }}>
       {/* Full-bleed Hero with Spline background and floating content panel */}
       <header id="hero" className="relative w-full min-h-screen overflow-hidden" onMouseMove={onMouseMoveHero} aria-label="Hero">
         {/* Background stack */}
         <div className="absolute inset-0 z-0">
+          {/* Themed left band to fill the 15% offset area on desktop */}
+          <div className="hidden lg:block absolute left-0 top-0 bottom-0 w-[15%]" aria-hidden="true" style={{ background: '#EFE6D8' }} />
+
           {/* Spline Scene (locked in place) */}
           <div className="absolute inset-0 lg:translate-x-[15%]" aria-hidden="true">
             <Suspense fallback={<div className="w-full h-full" style={{ background: 'radial-gradient(ellipse at 60% 40%, rgba(209,106,26,0.25), transparent 40%)' }} />}> 
@@ -170,7 +183,7 @@ export default function App() {
 
         {/* Readability shield behind content (left column) */}
         <div className="absolute inset-0 z-[1] pointer-events-none">
-          <div className="h-full w-full lg:w-[60%]" style={{ background: 'linear-gradient(90deg, rgba(248,241,231,0.95) 0%, rgba(248,241,231,0.80) 35%, rgba(248,241,231,0.00) 75%)' }} />
+          <div className="h-full w-full lg:w-[60%]" style={{ background: 'linear-gradient(90deg, rgba(248,241,231,0.95) 0%, rgba(248,241,231,0.85) 35%, rgba(248,241,231,0.00) 75%)' }} />
         </div>
 
         {/* Content overlay */}
@@ -252,22 +265,37 @@ export default function App() {
       </header>
 
       {/* Moving brand marquee */}
-      <section className="py-8" aria-label="Brand marquee">
+      <section className="py-10" aria-label="Brand marquee">
         <div className="overflow-hidden">
-          <div className="flex items-center gap-10 animate-[marquee_28s_linear_infinite] whitespace-nowrap px-6" style={{ color: palette.brown }}>
+          <div className="flex items-center gap-16 animate-[marquee_28s_linear_infinite] whitespace-nowrap px-10" style={{ color: palette.brown }}>
             {['ACME','ORBIT','SUNCO','PIONEER','ATLAS','NOVA','VECTOR','LUMEN'].map((n,i)=> (
-              <span key={i} className="inline-flex items-center gap-2 text-xs font-extrabold tracking-[0.18em] opacity-80">
-                <ShieldCheck className="w-4 h-4" /> {n}
+              <span key={i} className="inline-flex items-center gap-3 text-sm font-extrabold tracking-[0.18em] opacity-80">
+                <ShieldCheck className="w-5 h-5" /> {n}
               </span>
             ))}
             {['ACME','ORBIT','SUNCO','PIONEER','ATLAS','NOVA','VECTOR','LUMEN'].map((n,i)=> (
-              <span key={`d-${i}`} className="inline-flex items-center gap-2 text-xs font-extrabold tracking-[0.18em] opacity-80">
-                <ShieldCheck className="w-4 h-4" /> {n}
+              <span key={`d-${i}`} className="inline-flex items-center gap-3 text-sm font-extrabold tracking-[0.18em] opacity-80">
+                <ShieldCheck className="w-5 h-5" /> {n}
               </span>
             ))}
           </div>
         </div>
         <style>{`@keyframes marquee {0%{transform:translateX(0)}100%{transform:translateX(-50%)}}`}</style>
+      </section>
+
+      {/* Partners logos grid */}
+      <section aria-label="Partners" className="pb-6">
+        <div className="container mx-auto px-6">
+          <div className="rounded-2xl border-2 bg-white/70 backdrop-blur p-6" style={{ borderColor: '#E7DCCB' }}>
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              {partners.map((p, i) => (
+                <div key={i} className="h-12 sm:h-14 md:h-16 flex items-center opacity-80 hover:opacity-100 transition-opacity">
+                  <img src={p.src} alt={`${p.name} logo`} className="h-full w-auto object-contain" loading="lazy" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Results */}
@@ -304,10 +332,10 @@ export default function App() {
         <div className="container mx-auto px-6">
           <h2 id="cases-heading" className="text-4xl font-extrabold text-center" style={{ color: palette.dark }}>Recent Case Studies</h2>
           <p className="text-center mt-3" style={{ color: palette.brown }}>A few snapshots of outcomes and how we achieved them.</p>
-          <div className="mt-10 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <CaseCard title="CPG Beverage" tag="PERFORMANCE" metric="+182% Revenue / 90d" desc="Creative testing matrix + LTV-informed bidding + weekly CRO sprints." color={palette.orange} />
-            <CaseCard title="B2B SaaS" tag="LIFECYCLE" metric="-35% CAC" desc="ICP refinement + onboarding flows + lead quality scoring." color={palette.mustard} />
-            <CaseCard title="Marketplace" tag="ATTRIBUTION" metric="3.2x ROAS at scale" desc="MMM-informed budget allocation + audience expansion." color={palette.avocado} />
+          <div className="mt-10 grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <CaseCard title="CPG Beverage" tag="PERFORMANCE" metric="+182% Revenue / 90d" desc="Creative testing matrix + LTV-informed bidding + weekly CRO sprints." color={palette.orange} href="/cases#cpg-beverage" />
+            <CaseCard title="B2B SaaS" tag="LIFECYCLE" metric="-35% CAC" desc="ICP refinement + onboarding flows + lead quality scoring." color={palette.mustard} href="/cases#b2b-saas" />
+            <CaseCard title="Marketplace" tag="ATTRIBUTION" metric="3.2x ROAS at scale" desc="MMM-informed budget allocation + audience expansion." color={palette.avocado} href="/cases#marketplace" />
           </div>
         </div>
       </section>
@@ -395,15 +423,20 @@ export default function App() {
         </div>
       </section>
 
-      {/* FAQs */}
+      {/* FAQs (expanded and SEO/AEO-optimized copy) */}
       <section aria-labelledby="faq-heading" className="py-20">
         <div className="container mx-auto px-6">
           <h2 id="faq-heading" className="text-4xl font-extrabold text-center" style={{ color: palette.dark }}>FAQs</h2>
+          <p className="text-center mt-3" style={{ color: palette.brown }}>Clear, no-fluff answers to our most common questions.</p>
           <div className="mt-8 grid md:grid-cols-2 gap-4">
-            <FAQ q="How fast can we start?" a="Discovery is usually within 3 days. Launch in 1–2 weeks depending on scope." i={0} />
-            <FAQ q="What industries do you specialize in?" a="CPG, SaaS, marketplaces, and service businesses with clear revenue goals." i={1} />
-            <FAQ q="How do you report on results?" a="Weekly scorecards and monthly deep dives tied to revenue, CAC, and LTV." i={2} />
-            <FAQ q="Who will I work with?" a="A senior operator and a dedicated channel specialist—no hand-offs or bloat." i={3} />
+            <FAQ q="How fast can we start?" a="Discovery is usually within 3 days. We typically launch the first sprint in 1–2 weeks depending on scope and assets." i={0} />
+            <FAQ q="What industries do you specialize in?" a="We partner with CPG brands, B2B SaaS, marketplaces, and service businesses that have defined revenue goals and a bias for action." i={1} />
+            <FAQ q="How do you measure success?" a="We anchor to revenue, CAC, and LTV. Channel metrics support the story, but decisions roll up to business outcomes." i={2} />
+            <FAQ q="Who’s on the team?" a="You’ll work directly with a senior operator and a channel specialist. No hand-offs, no bloated layers." i={3} />
+            <FAQ q="Do you offer SEO and content?" a="Yes—technical SEO, content strategy, and authority building. We prioritize pages that drive pipeline and revenue, then build topic depth." i={4} />
+            <FAQ q="Can you audit our current setup?" a="Absolutely. Our free audit reviews tracking, account structure, creative, landing pages, and pipeline health—with a prioritized action plan." i={5} />
+            <FAQ q="What does pricing look like?" a="Engagements are scoped to outcomes. Most clients start with a 90-day growth sprint; fixed monthly pricing with clear deliverables." i={6} />
+            <FAQ q="How soon will we see results?" a="Signals appear in week one. Stat-sig wins typically emerge within 30–45 days, depending on volume and testing velocity." i={7} />
           </div>
         </div>
       </section>
