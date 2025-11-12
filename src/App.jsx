@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import Spline from '@splinetool/react-spline'
-import { BarChart3, Rocket, Target, LineChart, DollarSign, Mail, Hash, Layers, Tv, Quote, ShieldCheck, Award, Sparkles, CheckCircle2, Clock, Workflow, ChevronDown, Megaphone, Users } from 'lucide-react'
+import { BarChart3, Rocket, Target, LineChart, DollarSign, Mail, Hash, Layers, Tv, Quote, ShieldCheck, Award, Sparkles, CheckCircle2, Clock, Workflow, ChevronDown, Megaphone, Users, X } from 'lucide-react'
 
 const palette = {
   cream: '#F8F1E7',
@@ -13,16 +13,14 @@ const palette = {
 
 function Badge({ label, value, icon: Icon, color }) {
   return (
-    <div className="relative">
-      <div className="rounded-full px-6 py-4 border-4 shadow-[4px_6px_0_0_rgba(0,0,0,0.25)] bg-white/90" style={{
-        borderColor: color,
-      }}>
+    <div className="relative lift-card">
+      <div className="rounded-2xl px-5 py-4 border-2 bg-white/90 backdrop-blur" style={{ borderColor: color }}>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: color }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: color }}>
             <Icon className="w-6 h-6 text-white" />
           </div>
           <div>
-            <p className="text-sm" style={{ color: palette.brown }}>{label}</p>
+            <p className="text-xs font-bold opacity-80" style={{ color: palette.brown }}>{label}</p>
             <p className="text-2xl font-extrabold tracking-tight" style={{ color: palette.dark }}>{value}</p>
           </div>
         </div>
@@ -33,10 +31,8 @@ function Badge({ label, value, icon: Icon, color }) {
 
 function ServiceCard({ title, desc, icon: Icon, color }) {
   return (
-    <div className="group rounded-2xl p-6 border-2 transition transform hover:-translate-y-1 hover:shadow-xl bg-white/80 backdrop-blur" style={{
-      borderColor: color,
-    }}>
-      <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style={{ background: color }}>
+    <div className="group rounded-2xl p-6 border-2 bg-white/80 backdrop-blur lift-card" style={{ borderColor: color }}>
+      <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 shadow-sm" style={{ background: color }}>
         <Icon className="w-7 h-7 text-white" />
       </div>
       <h3 className="text-xl font-extrabold mb-2" style={{ color: palette.dark }}>{title}</h3>
@@ -48,14 +44,32 @@ function ServiceCard({ title, desc, icon: Icon, color }) {
 function FAQ({ q, a, i }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="border-2 rounded-xl bg-white/90 backdrop-blur" style={{ borderColor: i % 2 ? palette.mustard : palette.orange }}>
-      <button aria-expanded={open} onClick={() => setOpen(v=>!v)} className="w-full flex items-center justify-between text-left px-4 py-3">
-        <span className="font-bold" style={{ color: palette.dark }}>{q}</span>
+    <div className="border-2 rounded-xl bg-white/95 backdrop-blur lift-card" style={{ borderColor: i % 2 ? palette.mustard : palette.orange }}>
+      <button aria-expanded={open} onClick={() => setOpen(v=>!v)} className="w-full flex items-center gap-3 text-left px-4 py-3">
+        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-extrabold" style={{ background: i % 2 ? palette.mustard : palette.orange, color: 'white' }}>{i+1}</span>
+        <span className="font-bold flex-1" style={{ color: palette.dark }}>{q}</span>
         <ChevronDown className={`w-5 h-5 transition-transform ${open ? 'rotate-180' : ''}`} style={{ color: palette.brown }} />
       </button>
       {open && (
-        <div className="px-4 pb-4 text-sm" style={{ color: palette.brown }}>{a}</div>
+        <div className="px-4 pb-4 text-sm border-t" style={{ color: palette.brown, borderColor: 'rgba(0,0,0,0.08)' }}>{a}</div>
       )}
+    </div>
+  )
+}
+
+function CaseCard({ title, tag, metric, desc, color }) {
+  return (
+    <div className="relative rounded-2xl border-2 overflow-hidden lift-card bg-gradient-to-b from-white to-[#F8F1E7]" style={{ borderColor: color }}>
+      <div className="absolute top-4 left-4 text-[10px] font-black tracking-wider px-3 py-1 rounded-full" style={{ background: color, color: 'white' }}>{tag}</div>
+      <div className="p-6">
+        <p className="text-xs font-bold opacity-80" style={{ color: palette.brown }}>{title}</p>
+        <p className="mt-1 text-3xl font-extrabold" style={{ color: palette.dark }}>{metric}</p>
+        <p className="mt-2 text-sm" style={{ color: palette.brown }}>{desc}</p>
+        <div className="mt-4 inline-flex items-center gap-2 text-xs font-bold" style={{ color: color }}>
+          <span>How we did it</span>
+          <span aria-hidden>→</span>
+        </div>
+      </div>
     </div>
   )
 }
@@ -64,6 +78,7 @@ export default function App() {
   const [form, setForm] = useState({ name: '', email: '', company: '', revenue_goal: '' })
   const [status, setStatus] = useState({ state: 'idle', message: '' })
   const [cursor, setCursor] = useState({ px: 0, py: 0 })
+  const [showCalendar, setShowCalendar] = useState(false)
   const splineRef = useRef(null)
   const monitorRef = useRef(null)
   const rafRef = useRef(0)
@@ -73,22 +88,24 @@ export default function App() {
 
   const onSplineLoad = (spline) => {
     splineRef.current = spline
-    // Try to find a likely monitor/screen object by common names
     const candidates = ['Screen','Monitor','Display','CRT','Glass','Monitor_Screen','screen','monitor','CRT_Screen']
     for (const name of candidates) {
       const obj = spline.findObjectByName?.(name)
       if (obj) { monitorRef.current = obj; break }
+    }
+    // Ensure zeroed baseline to avoid initial wobble
+    if (monitorRef.current && monitorRef.current.rotation) {
+      monitorRef.current.rotation.x = 0
+      monitorRef.current.rotation.y = 0
     }
   }
 
   const aimMonitor = (px, py) => {
     const monitor = monitorRef.current
     if (!monitor) return
-    // Gentle tilt: radians
     const maxTilt = 0.22 // ~12.5deg
     const rx = py * maxTilt
     const ry = -px * maxTilt
-    // Apply rotation; keep z stable
     monitor.rotation.x = rx
     monitor.rotation.y = ry
     monitor.rotation.z = monitor.rotation.z || 0
@@ -124,21 +141,14 @@ export default function App() {
     }
   }
 
-  const heroTransform = useMemo(() => ({
-    transform: `translate3d(${cursor.px * 8}px, ${cursor.py * 8}px, 0) rotateX(${-cursor.py * 4}deg) rotateY(${cursor.px * 4}deg)`,
-    transformStyle: 'preserve-3d',
-    transition: 'transform 80ms linear',
-    willChange: 'transform',
-  }), [cursor])
-
   return (
     <div className="min-h-screen w-full overflow-x-hidden" style={{ background: palette.cream }}>
       {/* Full-bleed Hero with Spline background and floating content panel */}
       <header id="hero" className="relative w-full min-h-screen overflow-hidden" onMouseMove={onMouseMoveHero} aria-label="Hero">
         {/* Background stack */}
-        <div className="absolute inset-0 z-0" style={{ perspective: '1000px' }}>
-          {/* Spline Scene */}
-          <div className="absolute inset-0" style={heroTransform} aria-hidden="true">
+        <div className="absolute inset-0 z-0">
+          {/* Spline Scene (locked in place) */}
+          <div className="absolute inset-0 transform lg:translate-x-[15%]" aria-hidden="true">
             <Spline onLoad={onSplineLoad} scene="https://prod.spline.design/S4k-6fqjuV5AuVZe/scene.splinecode" style={{ width: '100%', height: '100%', pointerEvents: 'none' }} />
           </div>
 
@@ -149,9 +159,9 @@ export default function App() {
             <div className="blob blob-3" />
           </div>
 
-          {/* Subtle CRT scanlines */}
+          {/* Subtle CRT scanlines + sweep + grain + vignette */}
           <div className="hero-scanlines" />
-          {/* Grain + vignette for vintage feel and contrast */}
+          <div className="hero-sweep" />
           <div className="hero-grain" />
           <div className="hero-vignette" />
         </div>
@@ -160,7 +170,7 @@ export default function App() {
         <div className="relative z-10 container mx-auto px-6 min-h-[92vh] flex items-center">
           <div className="grid lg:grid-cols-12 gap-8 w-full">
             <div className="lg:col-span-7">
-              <div className="max-w-2xl rounded-3xl border-2 p-6 sm:p-8 bg-[#F8F1E7]/90 backdrop-blur-md shadow-[10px_12px_0_rgba(0,0,0,0.25)]" style={{ borderColor: palette.brown }}>
+              <div className="max-w-2xl rounded-3xl border-2 p-6 sm:p-8 glass-card" style={{ borderColor: palette.brown }}>
                 <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 mb-5 border" style={{ background: palette.cream, borderColor: palette.orange }}>
                   <Sparkles className="w-4 h-4" style={{ color: palette.orange }} />
                   <span className="text-xs font-bold tracking-wider" style={{ color: palette.brown }}>Woman-Owned • Results-Driven</span>
@@ -172,11 +182,11 @@ export default function App() {
                   We mix data, creativity, and a proven playbook to grow revenue—not vanity metrics.
                 </p>
                 <div className="mt-8 flex flex-wrap items-center gap-3">
-                  <a href="#contact" className="rounded-full px-6 py-3 font-extrabold shadow-[4px_6px_0_0_rgba(0,0,0,0.25)]" style={{ background: palette.orange, color: 'white' }}>
+                  <button onClick={() => setShowCalendar(true)} className="rounded-full px-6 py-3 font-extrabold shadow-[4px_6px_0_0_rgba(0,0,0,0.25)]" style={{ background: palette.orange, color: 'white' }}>
                     Book Strategy Call
-                  </a>
-                  <a href="#wins" className="rounded-full px-6 py-3 font-extrabold border-2" style={{ borderColor: palette.mustard, color: palette.mustard, background: palette.dark }}>
-                    See Our Wins
+                  </button>
+                  <a href="#contact" className="rounded-full px-6 py-3 font-extrabold border-2" style={{ borderColor: palette.mustard, color: palette.mustard, background: palette.dark }}>
+                    Get Free Audit
                   </a>
                 </div>
                 {/* Quick proof row */}
@@ -189,22 +199,22 @@ export default function App() {
               </div>
             </div>
 
-            {/* Right side: floating KPIs to add depth without blocking scene */}
+            {/* Right side: floating KPIs */}
             <div className="lg:col-span-5 hidden lg:flex items-center justify-end">
               <div className="grid gap-4 will-change-transform" style={{ transform: `translate3d(${cursor.px * 6}px, ${cursor.py * 4}px, 0)` }}>
-                <div className="rounded-2xl px-5 py-4 border-2 bg-white/80 backdrop-blur shadow-sm" style={{ borderColor: palette.mustard }}>
+                <div className="rounded-2xl px-5 py-4 border-2 bg-white/80 backdrop-blur shadow-sm lift-card" style={{ borderColor: palette.mustard }}>
                   <div className="flex items-center gap-3">
                     <Award className="w-5 h-5" style={{ color: palette.mustard }} />
                     <p className="text-sm font-bold" style={{ color: palette.brown }}>5.4x Avg ROAS</p>
                   </div>
                 </div>
-                <div className="rounded-2xl px-5 py-4 border-2 bg-white/80 backdrop-blur shadow-sm" style={{ borderColor: palette.orange }}>
+                <div className="rounded-2xl px-5 py-4 border-2 bg-white/80 backdrop-blur shadow-sm lift-card" style={{ borderColor: palette.orange }}>
                   <div className="flex items-center gap-3">
                     <Users className="w-5 h-5" style={{ color: palette.orange }} />
                     <p className="text-sm font-bold" style={{ color: palette.brown }}>38k+ Leads Generated</p>
                   </div>
                 </div>
-                <div className="rounded-2xl px-5 py-4 border-2 bg-white/80 backdrop-blur shadow-sm" style={{ borderColor: palette.avocado }}>
+                <div className="rounded-2xl px-5 py-4 border-2 bg-white/80 backdrop-blur shadow-sm lift-card" style={{ borderColor: palette.avocado }}>
                   <div className="flex items-center gap-3">
                     <Megaphone className="w-5 h-5" style={{ color: palette.avocado }} />
                     <p className="text-sm font-bold" style={{ color: palette.brown }}>900+ Campaigns Launched</p>
@@ -214,6 +224,24 @@ export default function App() {
             </div>
           </div>
         </div>
+
+        {/* Calendar modal */}
+        {showCalendar && (
+          <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center px-4">
+            <div className="absolute inset-0 bg-black/50" onClick={() => setShowCalendar(false)} />
+            <div className="relative w-full max-w-3xl rounded-2xl overflow-hidden border-2" style={{ borderColor: palette.brown, background: palette.cream }}>
+              <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: palette.brown }}>
+                <p className="font-extrabold" style={{ color: palette.dark }}>Book your strategy call</p>
+                <button aria-label="Close" onClick={() => setShowCalendar(false)} className="rounded-lg p-1 border" style={{ borderColor: palette.brown }}>
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="aspect-video w-full">
+                <iframe title="Calendar" src="https://cal.com/" className="w-full h-full" loading="lazy" />
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Moving brand marquee */}
@@ -250,7 +278,7 @@ export default function App() {
 
           <div className="mt-12 grid md:grid-cols-3 gap-6" aria-label="Testimonials" role="list">
             {[1,2,3].map((i) => (
-              <div key={i} className="rounded-2xl p-6 border-2 bg-gradient-to-b from-white to-[#F8F1E7]" style={{ borderColor: palette.brown }} role="listitem">
+              <div key={i} className="rounded-2xl p-6 border-2 bg-gradient-to-b from-white to-[#F8F1E7] lift-card" style={{ borderColor: palette.brown }} role="listitem">
                 <div className="flex items-start gap-3">
                   <Quote className="w-6 h-6" style={{ color: palette.orange }} />
                   <p className="text-sm" style={{ color: palette.brown }}>
@@ -260,6 +288,19 @@ export default function App() {
                 <p className="mt-3 text-xs font-semibold" style={{ color: palette.dark }}>VP Growth, CPG Brand</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Case Studies grid (polished cards) */}
+      <section id="cases" className="py-20" aria-labelledby="cases-heading">
+        <div className="container mx-auto px-6">
+          <h2 id="cases-heading" className="text-4xl font-extrabold text-center" style={{ color: palette.dark }}>Recent Case Studies</h2>
+          <p className="text-center mt-3" style={{ color: palette.brown }}>A few snapshots of outcomes and how we achieved them.</p>
+          <div className="mt-10 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <CaseCard title="CPG Beverage" tag="PERFORMANCE" metric="+182% Revenue / 90d" desc="Creative testing matrix + LTV-informed bidding + weekly CRO sprints." color={palette.orange} />
+            <CaseCard title="B2B SaaS" tag="LIFECYCLE" metric="-35% CAC" desc="ICP refinement + onboarding flows + lead quality scoring." color={palette.mustard} />
+            <CaseCard title="Marketplace" tag="ATTRIBUTION" metric="3.2x ROAS at scale" desc="MMM-informed budget allocation + audience expansion." color={palette.avocado} />
           </div>
         </div>
       </section>
@@ -290,11 +331,11 @@ export default function App() {
                 Our methodology focuses on measurable inputs and meaningful outcomes. Clear hypotheses, rapid testing, and dashboards that make the next move obvious.
               </p>
               <div className="mt-6 grid sm:grid-cols-2 gap-4">
-                <div className="rounded-xl p-4 border-2 bg-white" style={{ borderColor: palette.mustard }}>
+                <div className="rounded-xl p-4 border-2 bg-white lift-card" style={{ borderColor: palette.mustard }}>
                   <p className="font-bold" style={{ color: palette.dark }}>Trackable Results</p>
                   <p className="text-sm mt-1" style={{ color: palette.brown }}>Every campaign ships with reporting tied to revenue, not likes.</p>
                 </div>
-                <div className="rounded-xl p-4 border-2 bg-white" style={{ borderColor: palette.orange }}>
+                <div className="rounded-xl p-4 border-2 bg-white lift-card" style={{ borderColor: palette.orange }}>
                   <p className="font-bold" style={{ color: palette.dark }}>Proven Playbooks</p>
                   <p className="text-sm mt-1" style={{ color: palette.brown }}>We reuse what works and retire what doesn’t—fast.</p>
                 </div>
@@ -333,7 +374,7 @@ export default function App() {
               { label:'B2B SaaS', desc:'CAC -35% with lifecycle overhaul', src:'https://www.w3schools.com/html/movie.mp4' },
               { label:'Marketplace', desc:'3.2x ROAS at scale', src:'https://www.w3schools.com/html/mov_bbb.mp4' },
             ].map((v,i)=> (
-              <div key={i} className="rounded-2xl overflow-hidden border-2 bg-white" style={{ borderColor: palette.brown }}>
+              <div key={i} className="rounded-2xl overflow-hidden border-2 bg-white lift-card" style={{ borderColor: palette.brown }}>
                 <div className="p-4">
                   <p className="text-xs font-bold" style={{ color: palette.orange }}>{v.label}</p>
                   <p className="text-sm" style={{ color: palette.brown }}>{v.desc}</p>
@@ -368,8 +409,8 @@ export default function App() {
               <h2 id="contact-heading" className="text-4xl font-extrabold" style={{ color: palette.cream }}>Start Growing Your Revenue</h2>
               <p className="mt-3" style={{ color: '#C8BBAA' }}>Tell us a bit about your goals and we’ll follow up with a plan.</p>
               <div className="mt-6 flex flex-wrap gap-3">
-                <a href="#contact" className="rounded-full px-6 py-3 font-extrabold shadow-[4px_6px_0_0_rgba(0,0,0,0.35)]" style={{ background: palette.mustard, color: palette.dark }}>Start Now</a>
-                <a href="#hero" className="rounded-full px-6 py-3 font-extrabold border-2" style={{ borderColor: palette.avocado, color: palette.avocado }}>Book Consultation</a>
+                <button onClick={() => setShowCalendar(true)} className="rounded-full px-6 py-3 font-extrabold shadow-[4px_6px_0_0_rgba(0,0,0,0.35)]" style={{ background: palette.mustard, color: palette.dark }}>Book Call</button>
+                <a href="#contact" className="rounded-full px-6 py-3 font-extrabold border-2" style={{ borderColor: palette.avocado, color: palette.avocado }}>Get Audit</a>
               </div>
               <div className="mt-10 grid grid-cols-2 gap-4">
                 <div className="rounded-xl p-4 border-2" style={{ borderColor: palette.avocado, background: 'rgba(255,255,255,0.06)' }}>
@@ -381,7 +422,7 @@ export default function App() {
               </div>
             </div>
 
-            <form onSubmit={submitLead} className="rounded-2xl p-6 border-2 bg-white/90 backdrop-blur" style={{ borderColor: palette.mustard }}>
+            <form onSubmit={submitLead} className="rounded-2xl p-6 border-2 bg-white/95 backdrop-blur lift-card" style={{ borderColor: palette.mustard }}>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold mb-1" style={{ color: palette.brown }}>Name</label>
@@ -399,6 +440,13 @@ export default function App() {
                   <label className="block text-sm font-bold mb-1" style={{ color: palette.brown }}>Revenue Goal</label>
                   <input value={form.revenue_goal} onChange={(e)=>setForm({ ...form, revenue_goal: e.target.value })} className="w-full rounded-lg px-3 py-2 border focus:outline-none focus:ring-2" style={{ borderColor: palette.mustard }} placeholder="$500k / year" />
                 </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-bold mb-1" style={{ color: palette.brown }}>Anything else?</label>
+                  <textarea rows={4} className="w-full rounded-lg px-3 py-2 border focus:outline-none focus:ring-2" style={{ borderColor: palette.mustard }} placeholder="What success looks like for you..." />
+                </div>
+                <label className="sm:col-span-2 inline-flex items-center gap-2 text-xs" style={{ color: palette.brown }}>
+                  <input type="checkbox" className="rounded border" style={{ borderColor: palette.mustard }} /> I agree to the terms and privacy policy.
+                </label>
               </div>
               <button type="submit" className="mt-6 w-full rounded-full px-6 py-3 font-extrabold shadow-[4px_6px_0_0_rgba(0,0,0,0.25)]" style={{ background: palette.orange, color: 'white' }}>
                 {status.state === 'loading' ? 'Sending...' : 'Send'}
@@ -408,13 +456,39 @@ export default function App() {
                   {status.message}
                 </p>
               )}
+              <p className="mt-3 text-center text-[11px]" style={{ color: palette.brown }}>We’ll get back within 2 business days. No spam. Ever.</p>
             </form>
           </div>
         </div>
       </section>
 
-      <footer className="py-8 text-center" style={{ background: palette.dark }}>
-        <p className="text-xs" style={{ color: '#C8BBAA' }}>© {new Date().getFullYear()} Running With Strategy. All rights reserved.</p>
+      <footer className="py-10" style={{ background: palette.dark }}>
+        <div className="container mx-auto px-6">
+          <div className="grid md:grid-cols-3 gap-8 items-start">
+            <div>
+              <p className="font-extrabold text-lg" style={{ color: palette.cream }}>Running With Strategy</p>
+              <p className="mt-2 text-sm" style={{ color: '#C8BBAA' }}>A revenue-first marketing partner.
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-bold" style={{ color: palette.cream }}>Newsletter</p>
+              <div className="mt-2 flex gap-2">
+                <input placeholder="Your email" className="flex-1 rounded-lg px-3 py-2 border bg-transparent" style={{ borderColor: '#3a332b', color: palette.cream }} />
+                <button className="rounded-lg px-4 font-extrabold" style={{ background: palette.mustard, color: palette.dark }}>Join</button>
+              </div>
+              <p className="mt-2 text-[11px]" style={{ color: '#C8BBAA' }}>Monthly updates. No spam.</p>
+            </div>
+            <div>
+              <p className="text-sm font-bold" style={{ color: palette.cream }}>Links</p>
+              <ul className="mt-2 text-sm space-y-1" style={{ color: '#C8BBAA' }}>
+                <li><a href="#services">Services</a></li>
+                <li><a href="#cases">Case Studies</a></li>
+                <li><a href="#contact">Contact</a></li>
+              </ul>
+            </div>
+          </div>
+          <p className="text-xs mt-8 text-center" style={{ color: '#C8BBAA' }}>© {new Date().getFullYear()} Running With Strategy. All rights reserved.</p>
+        </div>
       </footer>
     </div>
   )
